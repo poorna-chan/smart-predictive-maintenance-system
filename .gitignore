@@ -1,0 +1,30 @@
+# Dependencies
+node_modules/
+dist/
+build/
+
+# Environment variables (never commit secrets)
+.env
+backend/.env
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Vite build output
+frontend/dist/
+
+# Coverage reports
+coverage/
