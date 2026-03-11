@@ -4,6 +4,7 @@ const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
+const rateLimit = require('express-rate-limit');
 const { connectDB } = require('./config/db');
 
 // Import routes
@@ -49,15 +50,33 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Rate limiting - protect all API routes from abuse
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 500,                  // limit each IP to 500 requests per window
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: 'Too many requests, please try again later.' }
+});
+
+// Stricter limiter for auth endpoints to prevent brute-force attacks
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: 'Too many authentication attempts, please try again in 15 minutes.' }
+});
+
 // Make io accessible to controllers via req.app.get('io')
 app.set('io', io);
 
 // API Routes
-app.use('/api/auth', authRoutes);
-app.use('/api/pumps', pumpRoutes);
-app.use('/api/sensors', sensorRoutes);
-app.use('/api/alerts', alertRoutes);
-app.use('/api/predictions', predictionRoutes);
+app.use('/api/auth', authLimiter, authRoutes);
+app.use('/api/pumps', apiLimiter, pumpRoutes);
+app.use('/api/sensors', apiLimiter, sensorRoutes);
+app.use('/api/alerts', apiLimiter, alertRoutes);
+app.use('/api/predictions', apiLimiter, predictionRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
